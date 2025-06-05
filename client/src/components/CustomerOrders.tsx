@@ -47,6 +47,7 @@ interface Order {
   quantity: number;
   total_price: number;
   created_at: string;
+  order_date?: string;
   product_name?: string;
   product?: {
     name: string;
@@ -196,6 +197,7 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
         date: new Date().toLocaleString('tr-TR'),
         items: orders.map(order => ({
           productName: order.product?.name || '',
+          type: order.product?.type || '',
           quantity: order.quantity,
           price: order.total_price / order.quantity,
           total: order.total_price
@@ -316,7 +318,13 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
                   <TableCell>{order.quantity}</TableCell>
                   <TableCell>{order.total_price} TL</TableCell>
                   <TableCell>
-                    {new Date(order.created_at).toLocaleDateString('tr-TR')}
+                    {new Date(order.order_date || order.created_at).toLocaleString('tr-TR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </TableCell>
                   <TableCell>
                     <Tooltip title="Sil">

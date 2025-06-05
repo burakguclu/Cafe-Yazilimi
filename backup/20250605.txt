@@ -1,0 +1,35 @@
+=== 05.06.2025 Günlük İşlem Kaydı ===
+
+05.06.2025 21:39:44 - Ahmet müşterisi Mantı ürününden 1 adet sipariş verdi. Toplam: 150 TL
+05.06.2025 21:39:56 - Ahmet müşterisi Kıymalı Gözleme ürününden 3 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 21:39:59 - Ahmet müşterisi Kola ürününden 3 adet sipariş verdi. Toplam: 120 TL
+05.06.2025 21:40:03 - Rukiye müşterisi Kola ürününden 3 adet sipariş verdi. Toplam: 120 TL
+05.06.2025 21:40:14 - Rıfat müşterisi Mantı ürününden 3 adet sipariş verdi. Toplam: 450 TL
+05.06.2025 21:40:14 - Rıfat müşterisi Kıymalı Gözleme ürününden 3 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 21:40:14 - Rıfat müşterisi Kola ürününden 3 adet sipariş verdi. Toplam: 120 TL
+05.06.2025 21:44:09 - Ecenaz  müşterisi Mantı ürününden 2 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 21:44:13 - Remzi müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
+05.06.2025 21:44:16 - Ecenaz  müşterisi Kola ürününden 3 adet sipariş verdi. Toplam: 120 TL
+05.06.2025 21:47:34 - Ecenaz  müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
+05.06.2025 21:47:34 - Ecenaz  müşterisi Kola ürününden 2 adet sipariş verdi. Toplam: 80 TL
+05.06.2025 21:47:39 - Rıfat müşterisi Kola ürününden 2 adet sipariş verdi. Toplam: 80 TL
+05.06.2025 21:49:58 - Ecenaz  müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
+05.06.2025 21:50:02 - Remzi müşterisi Kola ürününden 2 adet sipariş verdi. Toplam: 80 TL
+05.06.2025 21:51:45 - Kemal müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
+05.06.2025 21:57:26 - Ahmet müşterisi Mantı ürününden 3 adet sipariş verdi. Toplam: 450 TL
+05.06.2025 21:57:26 - Ahmet müşterisi Kıymalı Gözleme ürününden 1 adet sipariş verdi. Toplam: 100 TL
+05.06.2025 21:59:25 - Zafer müşterisi Mantı ürününden 2 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 21:59:28 - Zafer müşterisi Kola ürününden 2 adet sipariş verdi. Toplam: 80 TL
+05.06.2025 21:59:47 - Zafer müşterisi Kola ürününden 4 adet sipariş verdi. Toplam: 160 TL
+05.06.2025 22:02:01 - Ahmet müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
+05.06.2025 22:04:00 - Ahmet müşterisi Kola ürününden 3 adet sipariş verdi. Toplam: 120 TL
+05.06.2025 22:05:13 - Ahmet müşterisi Kıymalı Gözleme ürününden 3 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 22:14:01 - Ecenaz  müşterisi Mantı ürününden 2 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 22:14:01 - Ecenaz  müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
+05.06.2025 22:14:01 - Ecenaz  müşterisi Kola ürününden 2 adet sipariş verdi. Toplam: 80 TL
+05.06.2025 22:14:27 - Ecenaz  müşterisi Mantı ürününden 2 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 22:15:35 - Ecenaz  müşterisi Kola ürününden 2 adet sipariş verdi. Toplam: 80 TL
+05.06.2025 22:15:55 - Remzi müşterisi Kıymalı Gözleme ürününden 3 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 22:19:10 - Remzi müşterisi Kola ürününden 3 adet sipariş verdi. Toplam: 120 TL
+05.06.2025 22:20:40 - Kemal müşterisi Kıymalı Gözleme ürününden 3 adet sipariş verdi. Toplam: 300 TL
+05.06.2025 22:21:15 - Kemal müşterisi Kıymalı Gözleme ürününden 2 adet sipariş verdi. Toplam: 200 TL
