@@ -49,6 +49,7 @@ interface Order {
   created_at: string;
   order_date?: string;
   product_name?: string;
+  productType?: string;
   product?: {
     name: string;
     type: string;
@@ -85,7 +86,15 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
     try {
       const response = await api.getCustomerOrders(customerId);
       console.log('Yüklenen siparişler:', response.data);
-      setOrders(response.data);
+      const transformedOrders = response.data.map((order: any) => ({
+        ...order,
+        product: {
+          name: order.product_name,
+          type: order.type,
+          imageUrl: '',
+        },
+      }));
+      setOrders(transformedOrders);
     } catch (error) {
       console.error('Sipariş yükleme hatası:', error);
       showSnackbar('Siparişler yüklenirken bir hata oluştu', 'error');
@@ -196,8 +205,8 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
         customerName,
         date: new Date().toLocaleString('tr-TR'),
         items: orders.map(order => ({
-          productName: order.product?.name || '',
-          type: order.product?.type || '',
+          productName: order.product?.name,
+          type: order.product?.type,
           quantity: order.quantity,
           price: order.total_price / order.quantity,
           total: order.total_price
@@ -287,7 +296,7 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
           <TableBody>
             {orders.map((order) => {
               const productName = order.product?.name || order.product_name;
-              const productType = order.product?.type || '-';
+              const productType = order.product?.type || order.productType || '-';
               
               return (
                 <TableRow 
