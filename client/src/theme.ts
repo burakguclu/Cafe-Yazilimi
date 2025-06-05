@@ -8,6 +8,10 @@ export const theme = createTheme({
     secondary: {
       main: '#1976d2', // Mavi
     },
+    background: {
+      default: '#ffffff',
+      paper: '#ffffff'
+    }
   },
   components: {
     MuiButton: {
@@ -24,5 +28,12 @@ export const theme = createTheme({
         },
       },
     },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#ffffff'
+        }
+      }
+    }
   },
 }); 

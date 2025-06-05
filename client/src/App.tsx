@@ -29,17 +29,27 @@ import Products from './pages/Products'
 import { theme } from './theme'
 import CustomerOrders from './components/CustomerOrders'
 
-const drawerWidth = '20%'
+const drawerWidth = '300px'
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
   open?: boolean;
 }>(({ theme, open }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
-  marginLeft: drawerWidth,
-  height: 'calc(100vh - 64px)',
-  width: '80%',
-  overflow: 'auto'
+  transition: theme.transitions.create('margin', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  marginLeft: `-${drawerWidth}`,
+  ...(open && {
+    transition: theme.transitions.create('margin', {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    marginLeft: 0,
+  }),
+  backgroundColor: '#ffffff',
+  minHeight: '100vh'
 }))
 
 interface Customer {
@@ -103,7 +113,6 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex' }}>
         <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
           <Toolbar>
@@ -199,7 +208,7 @@ function App() {
           </List>
         </Drawer>
 
-        <Main>
+        <Main sx={{marginLeft: '5px', width: '1500px' }}>
           <Toolbar />
           {currentPage === 'products' ? (
             <Products />
@@ -211,24 +220,11 @@ function App() {
               onPayment={handlePayment}
             />
           ) : (
-            <Box sx={{ 
-              height: '100%',
-              width: '100%',
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'background.paper',
-              borderRadius: 1,
-              boxShadow: 1
-            }}>
-              <Typography variant="h4" color="text.secondary" sx={{ mb: 2 }}>
+            <Box>
+              <Typography variant="h4" color="white" sx={{ mb: 2 }}>
                 Lütfen bir müşteri seçin
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Siparişleri görüntülemek için soldaki listeden bir müşteri seçin
-              </Typography>
-            </Box>
+              </Box>
           )}
         </Main>
 
@@ -281,7 +277,6 @@ function App() {
           </Alert>
         </Snackbar>
       </Box>
-    </ThemeProvider>
   )
 }
 

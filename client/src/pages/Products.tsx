@@ -38,12 +38,6 @@ interface Product {
   imageUrl: string;
 }
 
-const defaultImages = {
-  'Gözleme': 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=500&auto=format&fit=crop&q=60',
-  'Mantı': 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=500&auto=format&fit=crop&q=60',
-  'İçecek': 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=500&auto=format&fit=crop&q=60'
-};
-
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -77,18 +71,35 @@ export default function Products() {
   const loadProducts = async () => {
     try {
       const response = await api.getProducts();
+      console.log('Veritabanından gelen ürünler:', response.data);
       setProducts(response.data);
     } catch (error) {
       showSnackbar('Ürünler yüklenirken bir hata oluştu', 'error');
     }
   };
 
+  const getProductImage = (name: string) => {
+    const imageMap: { [key: string]: string } = {
+      'Kıymalı Gözleme': '/images/kiymali-gozleme.jpg',
+      'Mantı': '/images/kiymali-manti.jpg',
+      'Kola': '/images/kola.jpg'
+    };
+    const imagePath = imageMap[name];
+    console.log('Ürün adı:', name);
+    console.log('Eşleşen görsel yolu:', imagePath);
+    console.log('Tüm görsel eşleştirmeleri:', imageMap);
+    return imagePath;
+  };
+
   const handleAddProduct = async () => {
     try {
-      await api.addProduct({
+      const productData = {
         ...newProduct,
-        price: parseFloat(newProduct.price)
-      });
+        price: parseFloat(newProduct.price),
+        imageUrl: getProductImage(newProduct.name)
+      };
+
+      await api.addProduct(productData);
       setNewProduct({ name: '', price: '', type: '', imageUrl: '' });
       setOpenDialog(false);
       loadProducts();
@@ -102,25 +113,43 @@ export default function Products() {
     if (!editingProduct) return;
     
     try {
-      await api.updateProduct(editingProduct.id, {
-        ...editingProduct,
-        price: parseFloat(editingProduct.price.toString())
-      });
+      const productData = {
+        name: editingProduct.name,
+        price: parseFloat(editingProduct.price.toString()),
+        type: editingProduct.type,
+        imageUrl: getProductImage(editingProduct.name)
+      };
+
+      await api.updateProduct(editingProduct.id, productData);
       setEditingProduct(null);
       loadProducts();
       showSnackbar('Ürün başarıyla güncellendi', 'success');
     } catch (error) {
+      console.error('Ürün güncelleme hatası:', error);
       showSnackbar('Ürün güncellenirken bir hata oluştu', 'error');
     }
   };
 
   const handleDeleteProduct = async (productId: number) => {
     try {
-      await api.deleteProduct(productId);
-      loadProducts();
-      showSnackbar('Ürün başarıyla silindi', 'success');
-    } catch (error) {
-      showSnackbar('Ürün silinirken bir hata oluştu', 'error');
+      if (!window.confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+        return;
+      }
+      
+      const response = await api.deleteProduct(productId);
+      if (response.status === 200) {
+        await loadProducts();
+        showSnackbar('Ürün başarıyla silindi', 'success');
+      }
+    } catch (error: any) {
+      console.error('Ürün silme hatası:', error);
+      if (error.response?.status === 404) {
+        showSnackbar('Ürün bulunamadı', 'error');
+      } else if (error.response?.status === 400) {
+        showSnackbar(error.response.data.error || 'Bu ürüne ait siparişler var', 'error');
+      } else {
+        showSnackbar('Ürün silinirken bir hata oluştu', 'error');
+      }
     }
   };
 
@@ -130,19 +159,6 @@ export default function Products() {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
-  };
-
-  const getProductImage = (type: string) => {
-    switch (type) {
-      case 'Gözleme':
-        return '/images/kiymali-gozleme.jpg';
-      case 'Mantı':
-        return '/images/kiymali-manti.jpg';
-      case 'İçecek':
-        return '/images/ayran.jpg';
-      default:
-        return '/images/default.jpg';
-    }
   };
 
   return (
@@ -196,8 +212,12 @@ export default function Products() {
                 <TableCell>
                   <Box
                     component="img"
-                    src={product.imageUrl || getProductImage(product.type)}
+                    src={getProductImage(product.name)}
                     alt={product.name}
+                    onError={(e) => {
+                      console.error('Resim yükleme hatası:', product.name);
+                      console.error('Hedef resim yolu:', getProductImage(product.name));
+                    }}
                     sx={{
                       width: 60,
                       height: 60,
@@ -289,17 +309,9 @@ export default function Products() {
             value={editingProduct ? editingProduct.type : newProduct.type}
             onChange={(e) => {
               if (editingProduct) {
-                setEditingProduct({ 
-                  ...editingProduct, 
-                  type: e.target.value,
-                  imageUrl: getProductImage(e.target.value)
-                });
+                setEditingProduct({ ...editingProduct, type: e.target.value });
               } else {
-                setNewProduct({ 
-                  ...newProduct, 
-                  type: e.target.value,
-                  imageUrl: getProductImage(e.target.value)
-                });
+                setNewProduct({ ...newProduct, type: e.target.value });
               }
             }}
           >
@@ -307,20 +319,6 @@ export default function Products() {
             <MenuItem value="Mantı">Mantı</MenuItem>
             <MenuItem value="İçecek">İçecek</MenuItem>
           </TextField>
-          <TextField
-            margin="dense"
-            label="Resim URL"
-            fullWidth
-            value={editingProduct ? editingProduct.imageUrl : newProduct.imageUrl}
-            onChange={(e) => {
-              if (editingProduct) {
-                setEditingProduct({ ...editingProduct, imageUrl: e.target.value });
-              } else {
-                setNewProduct({ ...newProduct, imageUrl: e.target.value });
-              }
-            }}
-            helperText="Özel bir resim URL'si girin veya varsayılan resmi kullanın"
-          />
         </DialogContent>
         <DialogActions>
           <Button 

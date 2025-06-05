@@ -18,7 +18,9 @@ export const api = {
     type: string;
     imageUrl: string;
   }) => axios.put(`${API_URL}/products/${productId}`, product),
-  deleteProduct: (productId: number) => axios.delete(`${API_URL}/products/${productId}`),
+  deleteProduct: (productId: number) => {
+    return axios.delete(`${API_URL}/products/${productId}`);
+  },
 
   // Sipariş işlemleri
   getCustomerOrders: (customerId: number) => 
@@ -29,9 +31,11 @@ export const api = {
     quantity: number; 
     total_price: number; 
   }) => axios.post(`${API_URL}/orders`, order),
-  deleteOrder: (orderId: number) => axios.delete(`${API_URL}/orders/${orderId}`),
+  deleteOrder: (orderId: number) => {
+    return axios.delete(`${API_URL}/orders/${orderId}`);
+  },
 
-  saveOrderToExcel: async (orderData: any) => {
+  saveOrderToExcel: (orderData: any) => {
     return axios.post(`${API_URL}/orders/save-to-excel`, orderData);
   },
 

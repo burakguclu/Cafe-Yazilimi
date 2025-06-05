@@ -20,7 +20,10 @@ import {
   IconButton,
   Tooltip,
   MenuItem,
-  InputAdornment
+  InputAdornment,
+  Card,
+  CardMedia,
+  CardContent
 } from '@mui/material';
 import { 
   Add as AddIcon, 
@@ -44,21 +47,28 @@ interface Order {
   quantity: number;
   total_price: number;
   created_at: string;
-  product: {
+  product_name?: string;
+  product?: {
     name: string;
     type: string;
     imageUrl: string;
   };
 }
 
+interface CartItem {
+  product_id: number;
+  name: string;
+  type: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+}
+
 export default function CustomerOrders({ customerId, customerName, onAddOrder, onPayment }: CustomerOrdersProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newOrder, setNewOrder] = useState({
-    product_id: '',
-    quantity: '1'
-  });
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -73,8 +83,10 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
   const loadOrders = async () => {
     try {
       const response = await api.getCustomerOrders(customerId);
+      console.log('Yüklenen siparişler:', response.data);
       setOrders(response.data);
     } catch (error) {
+      console.error('Sipariş yükleme hatası:', error);
       showSnackbar('Siparişler yüklenirken bir hata oluştu', 'error');
     }
   };
@@ -88,24 +100,76 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
     }
   };
 
-  const handleAddOrder = async () => {
+  const getProductImage = (name: string | undefined) => {
+    if (!name) {
+      console.log('Ürün adı bulunamadı');
+      return '/images/default.jpg';
+    }
+
+    const imageMap: { [key: string]: string } = {
+      'Kıymalı Gözleme': '/images/kiymali-gozleme.jpg',
+      'Mantı': '/images/kiymali-manti.jpg',
+      'Kola': '/images/kola.jpg'
+    };
+
+    const imagePath = imageMap[name] || '/images/default.jpg';
+    console.log('Müşteri Siparişi - Ürün adı:', name);
+    console.log('Müşteri Siparişi - Eşleşen görsel yolu:', imagePath);
+    return imagePath;
+  };
+
+  const handleAddToCart = (product: any) => {
+    const existingItem = cartItems.find(item => item.product_id === product.id);
+    
+    if (existingItem) {
+      setCartItems(cartItems.map(item =>
+        item.product_id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ));
+    } else {
+      setCartItems([...cartItems, {
+        product_id: product.id,
+        name: product.name,
+        type: product.type,
+        price: product.price,
+        quantity: 1,
+        imageUrl: getProductImage(product.name)
+      }]);
+    }
+  };
+
+  const handleRemoveFromCart = (productId: number) => {
+    setCartItems(cartItems.filter(item => item.product_id !== productId));
+  };
+
+  const handleUpdateQuantity = (productId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    
+    setCartItems(cartItems.map(item =>
+      item.product_id === productId
+        ? { ...item, quantity: newQuantity }
+        : item
+    ));
+  };
+
+  const handleSaveOrders = async () => {
     try {
-      const product = products.find(p => p.id === parseInt(newOrder.product_id));
-      if (!product) return;
+      for (const item of cartItems) {
+        await api.addOrder({
+          customer_id: customerId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          total_price: item.price * item.quantity
+        });
+      }
 
-      await api.addOrder({
-        customer_id: customerId,
-        product_id: parseInt(newOrder.product_id),
-        quantity: parseInt(newOrder.quantity),
-        total_price: product.price * parseInt(newOrder.quantity)
-      });
-
-      setNewOrder({ product_id: '', quantity: '1' });
+      setCartItems([]);
       setOpenDialog(false);
       loadOrders();
-      showSnackbar('Sipariş başarıyla eklendi', 'success');
+      showSnackbar('Siparişler başarıyla eklendi', 'success');
     } catch (error) {
-      showSnackbar('Sipariş eklenirken bir hata oluştu', 'error');
+      showSnackbar('Siparişler eklenirken bir hata oluştu', 'error');
     }
   };
 
@@ -121,12 +185,17 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
 
   const handlePayment = async () => {
     try {
+      if (orders.length === 0) {
+        showSnackbar('Ödenecek sipariş bulunamadı', 'error');
+        return;
+      }
+
       // Excel'e kaydetme işlemi
       const orderData = {
         customerName,
         date: new Date().toLocaleString('tr-TR'),
         items: orders.map(order => ({
-          productName: order.product.name,
+          productName: order.product?.name || '',
           quantity: order.quantity,
           price: order.total_price / order.quantity,
           total: order.total_price
@@ -134,17 +203,25 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
         total: orders.reduce((sum, order) => sum + order.total_price, 0)
       };
 
+      // Önce Excel'e kaydet
       await api.saveOrderToExcel(orderData);
 
-      // Siparişleri silme
-      await api.deleteCustomerOrders(customerId);
+      // Sonra her bir siparişi tek tek sil
+      for (const order of orders) {
+        await api.deleteOrder(order.id);
+      }
       
-      // State'i güncelleme
-      setOrders([]);
+      // Siparişleri yeniden yükle
+      await loadOrders();
       
       showSnackbar('Ödeme başarıyla tamamlandı', 'success');
-    } catch (error) {
-      showSnackbar('Ödeme işlemi sırasında bir hata oluştu', 'error');
+    } catch (error: any) {
+      console.error('Ödeme hatası:', error);
+      if (error.response?.status === 404) {
+        showSnackbar('Sipariş bulunamadı', 'error');
+      } else {
+        showSnackbar('Ödeme işlemi sırasında bir hata oluştu', 'error');
+      }
     }
   };
 
@@ -154,19 +231,6 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
-  };
-
-  const getProductImage = (type: string) => {
-    switch (type) {
-      case 'Gözleme':
-        return '/images/kiymali-gozleme.jpg';
-      case 'Mantı':
-        return '/images/kiymali-manti.jpg';
-      case 'İçecek':
-        return '/images/ayran.jpg';
-      default:
-        return '/images/default.jpg';
-    }
   };
 
   return (
@@ -184,7 +248,7 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
         borderBottom: '1px solid',
         borderColor: 'divider'
       }}>
-        <Typography variant="h4">{customerName}</Typography>
+        <Typography variant="h4" color="text.primary">{customerName}</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
@@ -219,89 +283,180 @@ export default function CustomerOrders({ customerId, customerName, onAddOrder, o
             </TableRow>
           </TableHead>
           <TableBody>
-            {orders.map((order) => (
-              <TableRow 
-                key={order.id}
-                sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-              >
-                <TableCell>
-                  <Box
-                    component="img"
-                    src={order.product?.imageUrl || getProductImage(order.product?.type)}
-                    alt={order.product?.name}
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      objectFit: 'cover',
-                      borderRadius: 1,
-                      boxShadow: 1
-                    }}
-                  />
-                </TableCell>
-                <TableCell>{order.product?.name}</TableCell>
-                <TableCell>{order.product?.type}</TableCell>
-                <TableCell>{order.quantity}</TableCell>
-                <TableCell>{order.total_price} TL</TableCell>
-                <TableCell>
-                  {new Date(order.created_at).toLocaleDateString('tr-TR')}
-                </TableCell>
-                <TableCell>
-                  <Tooltip title="Sil">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteOrder(order.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
+            {orders.map((order) => {
+              const productName = order.product?.name || order.product_name;
+              const productType = order.product?.type || '-';
+              
+              return (
+                <TableRow 
+                  key={order.id}
+                  sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  <TableCell>
+                    <Box
+                      component="img"
+                      src={getProductImage(productName)}
+                      alt={productName || 'Ürün'}
+                      onError={(e) => {
+                        console.error('Müşteri Siparişi - Resim yükleme hatası:', productName);
+                        console.error('Müşteri Siparişi - Hedef resim yolu:', getProductImage(productName));
+                        e.currentTarget.src = '/images/default.jpg';
+                      }}
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        boxShadow: 1
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{productName || 'Bilinmeyen Ürün'}</TableCell>
+                  <TableCell>{productType}</TableCell>
+                  <TableCell>{order.quantity}</TableCell>
+                  <TableCell>{order.total_price} TL</TableCell>
+                  <TableCell>
+                    {new Date(order.created_at).toLocaleDateString('tr-TR')}
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Sil">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteOrder(order.id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
 
       <Dialog 
         open={openDialog} 
-        onClose={() => setOpenDialog(false)}
-        maxWidth="sm"
+        onClose={() => {
+          setOpenDialog(false);
+          setCartItems([]);
+        }}
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle>Yeni Sipariş Ekle</DialogTitle>
         <DialogContent>
-          <TextField
-            select
-            margin="dense"
-            label="Ürün"
-            fullWidth
-            value={newOrder.product_id}
-            onChange={(e) => setNewOrder({ ...newOrder, product_id: e.target.value })}
-          >
-            {products.map((product) => (
-              <MenuItem key={product.id} value={product.id}>
-                {product.name} - {product.price} TL
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            margin="dense"
-            label="Adet"
-            type="number"
-            fullWidth
-            value={newOrder.quantity}
-            onChange={(e) => setNewOrder({ ...newOrder, quantity: e.target.value })}
-            inputProps={{ min: 1 }}
-          />
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {/* Sol taraf - Ürünler */}
+            <Box sx={{ flex: 2, maxHeight: '70vh', overflow: 'auto' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
+                {products.map((product) => (
+                  <Card 
+                    key={product.id}
+                    sx={{ 
+                      width: 'calc(33.33% - 16px)',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: 3
+                      }
+                    }}
+                    onClick={() => handleAddToCart(product)}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={getProductImage(product.name)}
+                      alt={product.name}
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="div">
+                        {product.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {product.type}
+                      </Typography>
+                      <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                        {product.price} TL
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Sağ taraf - Sepet */}
+            <Box sx={{ flex: 1, borderLeft: '1px solid', borderColor: 'divider', pl: 2 }}>
+              <Typography variant="h6" gutterBottom>Sepet</Typography>
+              {cartItems.length === 0 ? (
+                <Typography color="text.secondary">Sepetiniz boş</Typography>
+              ) : (
+                <>
+                  {cartItems.map((item) => (
+                    <Box key={item.product_id} sx={{ mb: 2, p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          component="img"
+                          src={item.imageUrl}
+                          alt={item.name}
+                          sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1 }}
+                        />
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="subtitle1">{item.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">{item.type}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleUpdateQuantity(item.product_id, item.quantity - 1)}
+                          >
+                            -
+                          </IconButton>
+                          <Typography>{item.quantity}</Typography>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleUpdateQuantity(item.product_id, item.quantity + 1)}
+                          >
+                            +
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleRemoveFromCart(item.product_id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      <Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>
+                        Toplam: {item.price * item.quantity} TL
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                    <Typography variant="h6">
+                      Toplam: {cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)} TL
+                    </Typography>
+                  </Box>
+                </>
+              )}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>İptal</Button>
+          <Button onClick={() => {
+            setOpenDialog(false);
+            setCartItems([]);
+          }}>
+            İptal
+          </Button>
           <Button 
-            onClick={handleAddOrder}
+            onClick={handleSaveOrders}
             variant="contained"
             color="primary"
+            disabled={cartItems.length === 0}
           >
-            Ekle
+            Kaydet
           </Button>
         </DialogActions>
       </Dialog>

@@ -2,19 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const images = {
-  'Kıymalı Gözleme': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=500&auto=format&fit=crop&q=60',
-  'Peynirli Gözleme': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=500&auto=format&fit=crop&q=60',
-  'Patatesli Gözleme': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=500&auto=format&fit=crop&q=60',
-  'Kıymalı Mantı': 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=500&auto=format&fit=crop&q=60',
-  'Peynirli Mantı': 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=500&auto=format&fit=crop&q=60',
-  'Ayran': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60',
-  'Kola': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60',
-  'Çay': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60',
-  'Türk Kahvesi': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60',
-  'Su': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60'
-};
-
 const downloadImage = (url, filename) => {
   return new Promise((resolve, reject) => {
     https.get(url, (response) => {
